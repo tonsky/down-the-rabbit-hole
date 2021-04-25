@@ -6,8 +6,8 @@
 
 (def bg-height-tiles (* core/screen-height-tiles 4))
 
-(defrecord Background [arr]
-  core/IRender
+(defrecord Background [id arr]
+  core/IRenderable
   (-render [this canvas now]
     (let [now @core/*now]
       (let [dy (-> now (mod (* 64 bg-height-tiles 900)) (/ 900) (* 64) long)]
@@ -18,10 +18,10 @@
   (-z-index [this] 100))
 
 (defn background []
-  (->Background (int-array (repeatedly (* core/screen-width-tiles bg-height-tiles) #(rand-int 4)))))
+  (->Background (core/next-id) (int-array (repeatedly (* core/screen-width-tiles bg-height-tiles) #(rand-int 4)))))
 
-(defrecord Particles [xs phases speeds]
-  core/IRender
+(defrecord Particles [id xs phases speeds]
+  core/IRenderable
   (-render [this canvas now]
     (let [now @core/*now]
       (with-open [paint (Paint.)]
@@ -37,12 +37,13 @@
 
 (defn particles []
   (->Particles
+    (core/next-id)
     (int-array (repeatedly 30 #(rand-int core/screen-width)))
     (int-array (repeatedly 30 #(rand-int 1000)))
     (float-array (repeatedly 30 rand))))
 
-(defrecord Walls [left-wall right-wall]
-  core/IRender
+(defrecord Walls [id left-wall right-wall]
+  core/IRenderable
   (-render [this canvas now]
     (let [now @core/*now]
       (let [dy (-> now (mod (* 64 bg-height-tiles 300)) (/ 300) (* 64) long)]
@@ -61,5 +62,6 @@
 
 (defn walls []
   (->Walls
+    (core/next-id)
     (int-array (repeatedly bg-height-tiles #(rand-int 2)))
     (int-array (repeatedly bg-height-tiles #(rand-int 2)))))

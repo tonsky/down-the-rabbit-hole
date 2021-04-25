@@ -3,22 +3,11 @@
    [down-the-rabbit-hole.game :as game])
   (:import
    [org.jetbrains.skija BackendRenderTarget Canvas ColorSpace DirectContext FramebufferFormat Paint Rect Surface SurfaceColorFormat SurfaceOrigin]
-   [org.lwjgl.glfw Callbacks GLFW GLFWErrorCallback GLFWKeyCallbackI]
+   [org.lwjgl.glfw Callbacks GLFW GLFWErrorCallback GLFWKeyCallbackI GLFWCursorPosCallbackI GLFWMouseButtonCallbackI]
    [org.lwjgl.opengl GL GL11]
    [org.lwjgl.system MemoryUtil]))
 
 (set! *warn-on-reflection* true)
-
-(defn color [^long l]
-  (.intValue (Long/valueOf l)))
-
-(def *rect-color (atom (color 0xFFCC3333)))
-
-(defn draw [^Canvas canvas]
-  (let [paint (doto (Paint.) (.setColor @*rect-color))]
-    (.translate canvas 320 240)
-    (.rotate canvas (mod (/ (System/currentTimeMillis) 10) 360))
-    (.drawRect canvas (Rect/makeXYWH -50 -50 100 100) paint)))
 
 (defn display-scale [window]
   (let [x (make-array Float/TYPE 1)
@@ -46,8 +35,22 @@
       (reify GLFWKeyCallbackI
         (invoke [this _ key _ action mods]
           (condp = action
-            GLFW/GLFW_PRESS (#'game/on-key-pressed key)
-            nil))))
+            GLFW/GLFW_PRESS   (#'game/on-key-press key true mods)
+            GLFW/GLFW_REPEAT  (#'game/on-key-press key true mods)
+            GLFW/GLFW_RELEASE (#'game/on-key-press key false mods)))))
+
+    (GLFW/glfwSetCursorPosCallback window
+      (reify GLFWCursorPosCallbackI
+        (invoke [this _ xpos ypos]
+          (#'game/on-mouse-move xpos ypos))))
+
+    (GLFW/glfwSetMouseButtonCallback window
+      (reify GLFWMouseButtonCallbackI
+        (invoke [this _ button action mods]
+          (condp = action
+            GLFW/GLFW_PRESS (#'game/on-mouse-click button true mods)
+            GLFW/GLFW_REPEAT (#'game/on-mouse-click button true mods)
+            GLFW/GLFW_RELEASE (#'game/on-mouse-click button false mods)))))
 
     (let [context (DirectContext/makeGL)
           fb-id   (GL11/glGetInteger 0x8CA6)
@@ -58,7 +61,6 @@
       (.scale canvas scale-x scale-y)
       (loop []
         (when (not (GLFW/glfwWindowShouldClose window))
-          (.clear canvas (color 0xFFFFFFFF))
           (let [layer (.save canvas)]
             (#'game/draw canvas 1280 720)
             (.restoreToCount canvas layer))
@@ -80,6 +82,3 @@
       (.free (GLFW/glfwSetErrorCallback nil))
       (shutdown-agents)
 )))
-
-(comment
-  (reset! lwjgl.main/*rect-color (lwjgl.main/color 0xFF33CC33)))

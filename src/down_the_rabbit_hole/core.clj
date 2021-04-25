@@ -1,4 +1,5 @@
 (ns down-the-rabbit-hole.core
+  (:refer-clojure :exclude [find])
   (:require
    [clojure.java.io :as io]
    [clojure.stacktrace :as stacktrace]
@@ -14,6 +15,13 @@
 (def screen-height-tiles 4)
 
 (def *now (atom (System/currentTimeMillis)))
+
+(def *next-id (atom 0))
+
+(defn next-id []
+  (swap! *next-id inc))
+
+(def *state (atom nil))
 
 (defn slurp-bytes [x]
   (with-open [is (io/input-stream x)
@@ -35,6 +43,9 @@
 
 (defn in? [x xs]
   (some #(when (= % x) true) xs))
+
+(defn find [pred xs]
+  (some #(if (pred %) %) xs))
 
 (defmacro cond+ [& clauses]
   (when-some [[test expr & rest] clauses]
@@ -82,11 +93,24 @@
       (.translate canvas 0 12))
     (.restore canvas)))
 
-(defprotocol IRender
+(defprotocol IRenderable
   (-render [this canvas now])
   (-z-index [this]))
 
-(defprotocol IHover
-  (-bounds [this])
-  (-on-hover [this])
-  (-on-leave [this]))
+(defprotocol IHoverable
+  (-bbox [this]))
+
+(defprotocol ISelectable)
+
+(defn hovered? [obj]
+  (= (:id obj) (:hovered-id @*state)))
+
+(defn selected? [obj]
+  (= (:id obj) (:selected-id @*state)))
+
+(defn in-rect? [x y ^Rect rect]
+  (and
+    (>= x (.getLeft rect))
+    (<= x (.getRight rect))
+    (>= y (.getTop rect))
+    (<= y (.getBottom rect))))
