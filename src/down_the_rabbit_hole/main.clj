@@ -1,5 +1,7 @@
 (ns down-the-rabbit-hole.main
   (:require
+   [clojure.stacktrace :as stacktrace]
+   [down-the-rabbit-hole.core :as core]
    [down-the-rabbit-hole.game :as game])
   (:import
    [org.jetbrains.skija BackendRenderTarget Canvas ColorSpace DirectContext FramebufferFormat Paint Rect Surface SurfaceColorFormat SurfaceOrigin]
@@ -8,6 +10,16 @@
    [org.lwjgl.system MemoryUtil]))
 
 (set! *warn-on-reflection* true)
+
+(defonce *running (atom true))
+
+(defmacro safe-call [& call]
+  `(try
+     (when @*running
+       (~@call))
+     (catch Throwable e#
+       (reset! *running false)
+       (stacktrace/print-stack-trace (stacktrace/root-cause e#)))))
 
 (defn display-scale [window]
   (let [x (make-array Float/TYPE 1)
@@ -35,22 +47,22 @@
       (reify GLFWKeyCallbackI
         (invoke [this _ key _ action mods]
           (condp = action
-            GLFW/GLFW_PRESS   (#'game/on-key-press key true mods)
-            GLFW/GLFW_REPEAT  (#'game/on-key-press key true mods)
-            GLFW/GLFW_RELEASE (#'game/on-key-press key false mods)))))
+            GLFW/GLFW_PRESS   (safe-call #'game/on-key-press key true mods)
+            GLFW/GLFW_REPEAT  (safe-call #'game/on-key-press key true mods)
+            GLFW/GLFW_RELEASE (safe-call #'game/on-key-press key false mods)))))
 
     (GLFW/glfwSetCursorPosCallback window
       (reify GLFWCursorPosCallbackI
         (invoke [this _ xpos ypos]
-          (#'game/on-mouse-move xpos ypos))))
+          (safe-call #'game/on-mouse-move xpos ypos))))
 
     (GLFW/glfwSetMouseButtonCallback window
       (reify GLFWMouseButtonCallbackI
         (invoke [this _ button action mods]
           (condp = action
-            GLFW/GLFW_PRESS (#'game/on-mouse-click button true mods)
-            GLFW/GLFW_REPEAT (#'game/on-mouse-click button true mods)
-            GLFW/GLFW_RELEASE (#'game/on-mouse-click button false mods)))))
+            GLFW/GLFW_PRESS   (safe-call #'game/on-mouse-click button true mods)
+            GLFW/GLFW_REPEAT  (safe-call #'game/on-mouse-click button true mods)
+            GLFW/GLFW_RELEASE (safe-call #'game/on-mouse-click button false mods)))))
 
     (let [context (DirectContext/makeGL)
           fb-id   (GL11/glGetInteger 0x8CA6)
@@ -59,10 +71,12 @@
           surface (Surface/makeFromBackendRenderTarget context target SurfaceOrigin/BOTTOM_LEFT SurfaceColorFormat/RGBA_8888 (ColorSpace/getSRGB))
           canvas  (.getCanvas surface)]
       (.scale canvas scale-x scale-y)
+      (safe-call #'game/start!)
       (loop []
         (when (not (GLFW/glfwWindowShouldClose window))
           (let [layer (.save canvas)]
-            (#'game/draw canvas 1280 720)
+            (.clear canvas (core/color 0xFF140043))
+            (safe-call #'game/draw canvas)
             (.restoreToCount canvas layer))
           (.flush context)
           (GLFW/glfwSwapBuffers window)

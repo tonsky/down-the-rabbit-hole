@@ -1,34 +1,38 @@
 {
   :paths ["src" "resources"]
   :deps {
-    org.lwjgl/lwjgl {:mvn/version "3.2.3"}
-    org.lwjgl/lwjgl-glfw {:mvn/version "3.2.3"}
+    org.lwjgl/lwjgl        {:mvn/version "3.2.3"}
+    org.lwjgl/lwjgl-glfw   {:mvn/version "3.2.3"}
     org.lwjgl/lwjgl-opengl {:mvn/version "3.2.3"}
+    datascript/datascript  {:mvn/version "1.1.0"}
   }
   :mvn/repos {"space-maven" {:url "https://packages.jetbrains.team/maven/p/skija/maven"}}
   :aliases {
+    :dev {
+      :extra-paths ["dev"]
+    }
     :macos {
       :extra-deps {
-        org.jetbrains.skija/skija-macos-x64 {:mvn/version "0.90.16"}
-        org.lwjgl/lwjgl$natives-macos {:mvn/version "3.2.3"}
-        org.lwjgl/lwjgl-glfw$natives-macos {:mvn/version "3.2.3"}
+        org.jetbrains.skija/skija-macos-x64  {:mvn/version "0.90.16"}
+        org.lwjgl/lwjgl$natives-macos        {:mvn/version "3.2.3"}
+        org.lwjgl/lwjgl-glfw$natives-macos   {:mvn/version "3.2.3"}
         org.lwjgl/lwjgl-opengl$natives-macos {:mvn/version "3.2.3"}
       }
       :jvm-opts ["-XstartOnFirstThread"]
     }
     :windows {
       :extra-deps {
-        org.jetbrains.skija/skija-windows {:mvn/version "0.90.16"}
-        org.lwjgl/lwjgl$natives-windows {:mvn/version "3.2.3"}
-        org.lwjgl/lwjgl-glfw$natives-windows {:mvn/version "3.2.3"}
+        org.jetbrains.skija/skija-windows      {:mvn/version "0.90.16"}
+        org.lwjgl/lwjgl$natives-windows        {:mvn/version "3.2.3"}
+        org.lwjgl/lwjgl-glfw$natives-windows   {:mvn/version "3.2.3"}
         org.lwjgl/lwjgl-opengl$natives-windows {:mvn/version "3.2.3"}
       }
     }
     :linux {
       :extra-deps {
-        org.jetbrains.skija/skija-linux {:mvn/version "0.90.16"}
-        org.lwjgl/lwjgl$natives-linux {:mvn/version "3.2.3"}
-        org.lwjgl/lwjgl-glfw$natives-linux {:mvn/version "3.2.3"}
+        org.jetbrains.skija/skija-linux      {:mvn/version "0.90.16"}
+        org.lwjgl/lwjgl$natives-linux        {:mvn/version "3.2.3"}
+        org.lwjgl/lwjgl-glfw$natives-linux   {:mvn/version "3.2.3"}
         org.lwjgl/lwjgl-opengl$natives-linux {:mvn/version "3.2.3"}
       }
     }

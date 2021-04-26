@@ -3,7 +3,8 @@
   (:require
    [clojure.java.io :as io]
    [clojure.stacktrace :as stacktrace]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [datascript.core :as ds])
   (:import
    [java.io ByteArrayOutputStream]
    [java.util Random]
@@ -14,14 +15,11 @@
 (def screen-height 240)
 (def screen-height-tiles 4)
 
-(def *now (atom (System/currentTimeMillis)))
+(def schema
+  {:role {:db/index true}
+   :item/owner {:db/valueType :db.type/ref}})
 
-(def *next-id (atom 0))
-
-(defn next-id []
-  (swap! *next-id inc))
-
-(def *state (atom nil))
+(def *db (atom nil))
 
 (defn slurp-bytes [x]
   (with-open [is (io/input-stream x)
@@ -32,14 +30,14 @@
 (def sprites
   (Image/makeFromEncoded (slurp-bytes (io/resource "sprites.png"))))
 
-(defn color [^long l]
-  (.intValue (Long/valueOf l)))
-
-(defn with-alpha [^long l ^long alpha]
-  (color
-    (bit-or
-      (-> (bit-and l 0x00FFFFFF))
-      (-> (bit-and alpha 0xFF) (bit-shift-left 24)))))
+(defn color
+  ([^long l]
+   (.intValue (Long/valueOf l)))
+  ([^long l ^long alpha]
+   (color
+     (bit-or
+       (-> (bit-and l 0x00FFFFFF))
+       (-> (bit-and alpha 0xFF) (bit-shift-left 24))))))
 
 (defn in? [x xs]
   (some #(when (= % x) true) xs))
@@ -114,24 +112,30 @@
       (.translate canvas 0 12))
     (.restore canvas)))
 
-(defprotocol IRenderable
-  (-render [this canvas now])
-  (-z-index [this]))
-
-(defprotocol IHoverable
-  (-bbox [this]))
-
-(defprotocol ISelectable)
-
-(defn hovered? [obj]
-  (= (:id obj) (:hovered-id @*state)))
-
-(defn selected? [obj]
-  (= (:id obj) (:selected-id @*state)))
-
 (defn in-rect? [x y ^Rect rect]
   (and
     (>= x (.getLeft rect))
     (<= x (.getRight rect))
     (>= y (.getTop rect))
     (<= y (.getBottom rect))))
+
+(defn entities [db index & fragments]
+  (map #(ds/entity db (:e %)) (apply ds/datoms db index fragments)))
+
+(defmulti render (fn [canvas db game entity] (:renderer entity)))
+
+(defn lerp [from to ratio]
+  (-> (- to from)
+    (* ratio)
+    (+ from)))
+
+(defn game [db]
+  (ds/entity db 1))
+
+(defn in-phase? [game & phases]
+  (in? (:game/phase game) phases))
+
+(defn lerp-phase [game from to]
+  (let [ratio (-> (- (:game/now game) (:game/phase-started game))
+                (/ (:game/phase-length game)))]
+    (lerp from to ratio)))
