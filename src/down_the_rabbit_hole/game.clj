@@ -45,7 +45,7 @@
         fps (long (/ 1000000000 (- (System/nanoTime) (:frame @core/*state 0))))
         {:keys [frame selected-id objects]} (swap! core/*state on-tick now)]
 
-    (.clear canvas (core/color 0xFF280e5b))
+    (.clear canvas (core/color 0xFF140043))
     (.scale canvas 3 3)
 
     (doseq [obj (->> objects

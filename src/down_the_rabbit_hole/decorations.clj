@@ -17,8 +17,15 @@
           (core/draw-sprite canvas (* sprite 64) 256 64 64 (* x 64) (- (* y 64) dy))))))
   (-z-index [this] 100))
 
+(defn rand-bg-tile []
+  (if (<= (rand) 0.85)
+    0
+    (+ 1 (rand-int 8))))
+
 (defn background []
-  (->Background (core/next-id) (int-array (repeatedly (* core/screen-width-tiles bg-height-tiles) #(rand-int 4)))))
+  (->Background
+    (core/next-id)
+    (int-array (repeatedly (* core/screen-width-tiles bg-height-tiles) rand-bg-tile))))
 
 (defrecord Particles [id xs phases speeds]
   core/IRenderable
@@ -60,8 +67,13 @@
         (.restore canvas))))
   (-z-index [this] 1000))
 
+(defn rand-wall-tile []
+  (if (<= (rand) 0.3)
+    0
+    (+ 1 (rand-int 6))))
+
 (defn walls []
   (->Walls
     (core/next-id)
-    (int-array (repeatedly bg-height-tiles #(rand-int 2)))
-    (int-array (repeatedly bg-height-tiles #(rand-int 2)))))
+    (int-array (repeatedly bg-height-tiles rand-wall-tile))
+    (int-array (repeatedly bg-height-tiles rand-wall-tile))))
