@@ -1,4 +1,6 @@
 .cpcache
 *.app
 *.dmg
+*.msi
+*.exe
 target
