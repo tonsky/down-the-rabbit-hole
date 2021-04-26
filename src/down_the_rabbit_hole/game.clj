@@ -39,10 +39,12 @@
 (defn on-key-press [key pressed? mods]
   #_(println key pressed? mods))
 
+(def *mouse-pos (atom [0 0]))
 
 (defn on-mouse-move [x y]
   (let [x (long (/ x 3))
         y (long (/ y 3))
+        _ (reset! *mouse-pos [x y])
         db @core/*db
         tx (core/cond+
              :let [hovered (core/hovered db)]
@@ -50,10 +52,7 @@
              (and (some? hovered) (core/in-rect? x y (:bbox hovered)))
              []
 
-             :let [hovered' (->> (core/entities db :aevt :bbox)
-                              (sort-by :z-index)
-                              (reverse)
-                              (core/find #(core/in-rect? x y (:bbox %))))]
+             :let [hovered' (core/find-hovered db [x y])]
 
              (some? hovered')
              (concat
@@ -71,7 +70,8 @@
 
 (defn on-mouse-click [button pressed? mods]
   (let [db      @core/*db
-        hovered (core/hovered db)]
+        hovered (or (core/hovered db)
+                  (core/find-hovered db @*mouse-pos))]
     (when (and (= 0 button) pressed? (some? hovered))
       (cond
         (= :role/end-turn (:role hovered))

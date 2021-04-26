@@ -136,6 +136,12 @@
 (defn hovered [db]
   (first (entities db :aevt :hovered)))
 
+(defn find-hovered [db [x y]]
+  (->> (entities db :aevt :bbox)
+    (sort-by :z-index)
+    (reverse)
+    (find #(in-rect? x y (:bbox %)))))
+
 (defn in-phase? [game & phases]
   (in? (:game/phase game) phases))
 
