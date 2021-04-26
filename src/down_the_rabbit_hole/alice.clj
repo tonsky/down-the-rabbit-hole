@@ -9,15 +9,14 @@
   (-render [this canvas now]
     (let [sprite (-> now (/ 300) (mod 2) long)
           dy (core/oscillation @core/*now 0 2000 5)]
-      (core/draw-sprite canvas (* sprite 64) 0 64 128 100 (+ 30 dy))
-      (when (or (core/hovered? this) (core/selected? this))
-        (core/draw-text-centered canvas "Alice" 132 154))))
+      (core/draw-sprite canvas (* sprite 72) 0 72 96 100 (+ 30 dy))
+      (core/draw-text-centered canvas "Alice\n♥10 ⚡4" 132 140)))
 
   (-z-index [this] 200)
 
   core/IHoverable
   (-bbox [this]
-    (Rect/makeXYWH 100 40 64 108))
+    (Rect/makeXYWH 100 32 72 96))
 
   core/ISelectable)
 

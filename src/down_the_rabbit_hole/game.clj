@@ -6,6 +6,7 @@
    [down-the-rabbit-hole.alice :as alice]
    [down-the-rabbit-hole.decorations :as decorations]
    [down-the-rabbit-hole.core :as core]
+   [down-the-rabbit-hole.item :as item]
    [down-the-rabbit-hole.rabbit :as rabbit])
   (:import
    [java.util Random]
@@ -22,23 +23,27 @@
        (stacktrace/print-stack-trace (stacktrace/root-cause e#)))))
 
 (reset! core/*state
-  {:hovered-id nil
+  {:frame (System/nanoTime)
+   :hovered-id nil
    :selected-id nil
    :objects
    (reduce #(assoc %1 (:id %2) %2) {}
-     [(decorations/background)
-      (alice/alice)
-      (rabbit/rabbit)
-      (decorations/particles)
-      (decorations/walls)])})
+     (concat 
+       [(decorations/background)
+        (alice/alice)
+        (rabbit/rabbit)
+        (decorations/particles)
+        (decorations/walls)]
+       (repeatedly 5 #(item/item (rand-nth item/types)))))})
 
 (defn on-tick [state now]
-  state)
+  (assoc state
+    :frame (System/nanoTime)))
 
 (defn draw-impl [^Canvas canvas window-width window-height]
   (let [now (reset! core/*now (System/currentTimeMillis))
-        _   (swap! core/*state on-tick now)
-        {:keys [selected-id objects]} @core/*state]
+        fps (long (/ 1000000000 (- (System/nanoTime) (:frame @core/*state 0))))
+        {:keys [frame selected-id objects]} (swap! core/*state on-tick now)]
 
     (.clear canvas (core/color 0xFF280e5b))
     (.scale canvas 3 3)
@@ -48,6 +53,7 @@
                   (filter #(satisfies? core/IRenderable %))
                   (sort-by core/-z-index))]
       (core/-render obj canvas now))
+    (core/draw-text canvas (str fps) 10 224)
 
     (when-some [selected (get objects selected-id)]
       (let [bbox (core/-bbox selected)

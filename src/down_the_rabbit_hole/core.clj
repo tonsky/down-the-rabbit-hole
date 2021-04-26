@@ -57,7 +57,29 @@
   (-> now (mod period) (/ period) (+ phase) (* 2 Math/PI) (Math/cos) (* amplitude) (Math/round)))
 
 (defn draw-sprite [canvas sx sy sw sh x y]
-  (.drawImageRect canvas sprites (Rect/makeXYWH sx sy sw sh) (Rect/makeXYWH x y sw sh)))
+  (.drawImageRect canvas sprites (Rect/makeXYWH sx sy sw sh) (Rect/makeXYWH x y sw sh))
+  sw)
+
+(defn letter-width [ch]
+  (cond
+    (< (int ch) 128) 8
+    (= ch \⚔) 8
+    :else 10))
+
+(defn draw-letter [canvas ch x y]
+  (cond
+    (= ch \♥)
+    (draw-sprite canvas 0 320 10 10 x (- y 1))
+    (= ch \⚡)
+    (draw-sprite canvas 16 320 10 10 x (- y 1))
+    (= ch \⚔)
+    (draw-sprite canvas 32 320 9 10 x (- y 1))
+    (= ch \♢)
+    (draw-sprite canvas 48 320 10 10 x (- y 1))
+    :else
+    (let [sx (-> ch (int) (mod 16) (* 8))
+          sy (-> ch (int) (quot 16) (* 8) (+ 320))]
+      (draw-sprite canvas sx sy 8 8 x y))))
 
 (defn draw-text [canvas ^String s x0 y0]
   (loop [i 0
@@ -72,24 +94,23 @@
       (= \newline ch)
       (recur (inc i) x0 (+ y 12))
 
-      :let [sx (-> ch (int) (mod 16) (* 8))
-            sy (-> ch (int) (quot 16) (* 8) (+ 320))]
-
       :else
       (do
-        (draw-sprite canvas sx sy 8 8 x y)
-        (recur (inc i) (+ x 8) y)))))
+        (draw-letter canvas ch x y)
+        (recur (inc i) (+ x (letter-width ch)) y)))))
 
 (defn draw-text-centered [canvas ^String s center y0]
   (let [lines (str/split-lines s)]
     (.save canvas)
-    (.translate canvas center y0)
+    (.translate canvas 0 y0)
     (doseq [line lines
-            :let [width (-> (count line) (* 8))]]
-      (doseq [[ch x] (map vector line (range))
-              :let [sx (-> ch (int) (mod 16) (* 8))
-                    sy (-> ch (int) (quot 16) (* 8) (+ 320))]]
-        (draw-sprite canvas sx sy 8 8 (- (* x 8) (quot width 2)) 0))
+            :let [width (reduce + 0 (map letter-width line))]]
+      (loop [i 0
+             x (- center (quot width 2))]
+        (when (< i (count line))
+          (let [ch (.charAt line i)]
+            (draw-letter canvas ch x 0)
+            (recur (inc i) (+ x (letter-width ch))))))
       (.translate canvas 0 12))
     (.restore canvas)))
 
