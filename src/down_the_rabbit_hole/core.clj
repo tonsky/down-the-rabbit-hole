@@ -16,7 +16,8 @@
 (def screen-height-tiles 4)
 
 (def schema
-  {:role {:db/index true}
+  {:hovered {:db/unique :db.unique/identity}
+   :role {:db/index true}
    :item/owner {:db/valueType :db.type/ref}})
 
 (def *db (atom nil))
@@ -131,6 +132,9 @@
 
 (defn game [db]
   (ds/entity db 1))
+
+(defn hovered [db]
+  (first (entities db :aevt :hovered)))
 
 (defn in-phase? [game & phases]
   (in? (:game/phase game) phases))

@@ -11,6 +11,7 @@
     'down-the-rabbit-hole.alice
     'down-the-rabbit-hole.rabbit
     'down-the-rabbit-hole.item
+    'down-the-rabbit-hole.end-turn
     'down-the-rabbit-hole.phases
     'down-the-rabbit-hole.game
     :reload)

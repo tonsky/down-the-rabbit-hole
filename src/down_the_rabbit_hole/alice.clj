@@ -11,12 +11,12 @@
         [x y]  (cond
                  (core/in-phase? game :phase/player-enter) [100 (core/lerp-phase game -96 32)]
                  (core/in-phase? game :phase/enemy-enter)  [100 32]
-                 (core/in-phase? game :phase/items-enter)  [(core/lerp-phase game 100 50) 32]
+                 (core/in-phase? game :phase/players-separate) [(core/lerp-phase game 100 50) 32]
                  :else [50 32])
         dy     (core/oscillation now 0 2000 5)
         sprite (-> now (/ 300) (mod 2) long)]
     (core/draw-sprite canvas (* sprite 72) 0 72 96 x (+ y dy))
-    (when (core/in-phase? game :phase/player-turn :phase/enemy-turn)
+    (when (core/in-phase? game :phase/items-enter :phase/player-turn :phase/player-items-leave :phase/enemy-turn :phase/enemy-items-leave)
       (core/draw-text-centered canvas
         (str "♥" (:health entity) " ⚡" (:energy entity))
         (+ x 36) 140))))

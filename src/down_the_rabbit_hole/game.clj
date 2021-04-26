@@ -34,28 +34,7 @@
     (doseq [entity (->> (core/entities db :aevt :renderer)
                      (sort-by :z-index))]
       (core/render canvas db game entity))
-    (core/draw-text canvas (str fps) 10 224)
-
-    #_(when-some [selected (get objects selected-id)]
-      (let [bbox (core/-bbox selected)
-            l    (.getLeft bbox)
-            t    (.getTop bbox)
-            r    (.getRight bbox)
-            b    (.getBottom bbox)]
-        (with-open [paint (-> (Paint.) (.setColor (core/color 0xFFFFFFFF)) (.setMode PaintMode/STROKE) (.setStrokeWidth 2))]
-          (.drawLine canvas (- l 2) (- t 1) (+ l 4) (- t 1) paint)
-          (.drawLine canvas (- l 1) (- t 2) (- l 1) (+ t 4) paint)
-
-          (.drawLine canvas (+ r 2) (- t 1) (- r 4) (- t 1) paint)
-          (.drawLine canvas (+ r 1) (- t 2) (+ r 1) (+ t 4) paint)
-
-          (.drawLine canvas (- l 2) (+ b 1) (+ l 4) (+ b 1) paint)
-          (.drawLine canvas (- l 1) (- b 4) (- l 1) (+ b 1) paint)
-
-          (.drawLine canvas (+ r 2) (+ b 1) (- r 4) (+ b 1) paint)
-          (.drawLine canvas (+ r 1) (- b 4) (+ r 1) (+ b 1) paint))))
-
-))
+    (core/draw-text canvas (str fps) 10 224)))
 
 (defn on-key-press [key pressed? mods]
   #_(println key pressed? mods))
@@ -63,28 +42,42 @@
 
 (defn on-mouse-move [x y]
   (let [x (long (/ x 3))
-        y (long (/ y 3))]
-  #_(let [{:keys [hovered-id objects]} state
-        hovered (get objects hovered-id)]
-    (if (and (some? hovered) (core/in-rect? x y (core/-bbox hovered)))
-      state
-      (if-some [hovered' (->> objects
-                           (vals)
-                           (filter #(satisfies? core/IHoverable %))
-                           (sort-by core/-z-index)
-                           (reverse)
-                           (core/find #(core/in-rect? x y (core/-bbox %))))]
-        (assoc state :hovered-id (:id hovered'))
-        (assoc state :hovered-id nil))))))
+        y (long (/ y 3))
+        db @core/*db
+        tx (core/cond+
+             :let [hovered (core/hovered db)]
+
+             (and (some? hovered) (core/in-rect? x y (:bbox hovered)))
+             []
+
+             :let [hovered' (->> (core/entities db :aevt :bbox)
+                              (sort-by :z-index)
+                              (reverse)
+                              (core/find #(core/in-rect? x y (:bbox %))))]
+
+             (some? hovered')
+             (concat
+               (when (some? hovered)
+                 [[:db/retract (:db/id hovered) :hovered true]])
+               [[:db/add (:db/id hovered') :hovered true]])
+   
+             (some? hovered)
+             [[:db/retract (:db/id hovered) :hovered true]]
+
+             :else
+             [])]
+  (when-not (empty? tx)
+    (ds/transact! core/*db tx))))
 
 (defn on-mouse-click [button pressed? mods]
-  #_(let [{:keys [hovered-id selected-id objects]} state]
-    (cond
-      (and (= 0 button) pressed? (some? hovered-id))
-      (assoc state :selected-id hovered-id)
-
-      (and (= 0 button) pressed?)
-      (assoc state :selected-id nil)
-
-      :else
-      state)))
+  (let [db      @core/*db
+        hovered (core/hovered db)]
+    (when (and (= 0 button) pressed? (some? hovered))
+      (cond
+        (= :role/end-turn (:role hovered))
+        (ds/transact! core/*db
+          [{:db/id 1
+            :game/phase         :phase/player-items-leave
+            :game/phase-started (:game/now (core/game db))
+            :game/phase-length  500}
+           [:db/retractEntity (:db/id hovered)]])))))
