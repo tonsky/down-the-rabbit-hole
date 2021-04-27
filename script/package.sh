@@ -24,4 +24,4 @@ zip -q -r ../target/down_the_rabbit_hole.jar *
 popd
 
 rm -rf "Down the Rabbit Hole.app"
-jpackage --input target/ --name "Down the Rabbit Hole" --main-jar clojure-1.10.3.jar --main-class clojure.main --type app-image --java-options '-XstartOnFirstThread' --arguments '-m down-the-rabbit-hole.main' --icon resources/icon.icns
+jpackage --input target/ --name "Down the Rabbit Hole" --main-jar clojure-1.10.3.jar --main-class clojure.main --type dmg --java-options '-XstartOnFirstThread' --arguments '-m down-the-rabbit-hole.main' --icon resources/icon.icns
