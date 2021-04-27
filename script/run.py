@@ -4,7 +4,7 @@ import os, platform, subprocess, sys
 def main():
   os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
   system = {'Darwin': 'macos', 'Linux': 'linux', 'Windows': 'windows'}[platform.system()]
-  subprocess.check_call(["clj", "-A:dev", "-M:" + system, "-m", "down-the-rabbit-hole.main"])
+  subprocess.check_call(["clj", "-A:dev", "-M:" + system, "-m", "down-the-rabbit-hole.main", "--repl"])
   return 0
 
 if __name__ == '__main__':

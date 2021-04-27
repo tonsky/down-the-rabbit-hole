@@ -1,6 +1,7 @@
 {
-  :paths ["src" "resources"]
+  :paths ["src"]
   :deps {
+    org.clojure/clojure    {:mvn/version "1.10.3"}
     org.lwjgl/lwjgl        {:mvn/version "3.2.3"}
     org.lwjgl/lwjgl-glfw   {:mvn/version "3.2.3"}
     org.lwjgl/lwjgl-opengl {:mvn/version "3.2.3"}
@@ -35,6 +36,11 @@
         org.lwjgl/lwjgl-glfw$natives-linux   {:mvn/version "3.2.3"}
         org.lwjgl/lwjgl-opengl$natives-linux {:mvn/version "3.2.3"}
       }
+    }
+    :uberdeps {
+      :replace-deps {uberdeps/uberdeps {:mvn/version "1.0.4"}}
+      :replace-paths []
+      :main-opts ["-m" "uberdeps.uberjar"]
     }
   }
 }

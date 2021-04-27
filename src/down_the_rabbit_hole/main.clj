@@ -40,8 +40,9 @@
     (GLFW/glfwShowWindow window)  
     (GL/createCapabilities)
 
-    (doto (Thread. #(clojure.main/main))
-      (.start))
+    (when (core/in? "--repl" args)
+      (doto (Thread. #(clojure.main/main))
+        (.start)))
 
     (GLFW/glfwSetKeyCallback window
       (reify GLFWKeyCallbackI

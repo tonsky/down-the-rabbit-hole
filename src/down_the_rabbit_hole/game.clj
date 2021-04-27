@@ -34,7 +34,7 @@
     (doseq [entity (->> (core/entities db :aevt :renderer)
                      (sort-by :z-index))]
       (core/render canvas db game entity))
-    (core/draw-text canvas (str fps) 10 224)))
+    #_(core/draw-text canvas (str fps) 10 224)))
 
 (defn on-key-press [key pressed? mods]
   #_(println key pressed? mods))
