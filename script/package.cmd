@@ -19,4 +19,4 @@ pushd src
 zip -q -r ../target/down_the_rabbit_hole.jar *
 popd
 
-jpackage --input target/ --name "Down the Rabbit Hole" --main-jar clojure-1.10.3.jar --main-class clojure.main --type msi --arguments "-m down-the-rabbit-hole.main" --win-menu --win-shortcut --win-dir-chooser
+jpackage --input target/ --name "Down the Rabbit Hole" --main-jar clojure-1.10.3.jar --main-class clojure.main --type msi --arguments "-m down-the-rabbit-hole.main" --icon resources/icon.ico --win-menu --win-shortcut --win-dir-chooser

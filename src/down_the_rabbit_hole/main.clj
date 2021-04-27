@@ -1,6 +1,7 @@
 (ns down-the-rabbit-hole.main
   (:require
    [clojure.stacktrace :as stacktrace]
+   [clojure.string :as str]
    [down-the-rabbit-hole.core :as core]
    [down-the-rabbit-hole.game :as game])
   (:import
@@ -32,9 +33,18 @@
   (GLFW/glfwInit)
   (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE GLFW/GLFW_FALSE)
   (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_TRUE)
-  (let [width 1280
+  (GLFW/glfwWindowHint GLFW/GLFW_SCALE_TO_MONITOR GLFW/GLFW_TRUE)
+  (let [os-name (str/lower-case (System/getProperty "os.name"))
+        os (cond
+             (str/includes? os-name "mac") :macos
+             (str/includes? os-name "darwin") :macos
+             (str/includes? os-name "windows") :windows
+             (str/includes? os-name "nux") :linux
+             (str/includes? os-name "nix") :linux)
+        width 1280
         height 720
-        window (GLFW/glfwCreateWindow width height "Down the Rabbit Hole" MemoryUtil/NULL MemoryUtil/NULL)]
+        window (GLFW/glfwCreateWindow width height "Down the Rabbit Hole" MemoryUtil/NULL MemoryUtil/NULL)
+        [scale-x scale-y] (display-scale window)]
     (GLFW/glfwMakeContextCurrent window)
     (GLFW/glfwSwapInterval 1)
     (GLFW/glfwShowWindow window)  
@@ -55,7 +65,10 @@
     (GLFW/glfwSetCursorPosCallback window
       (reify GLFWCursorPosCallbackI
         (invoke [this _ xpos ypos]
-          (safe-call #'game/on-mouse-move xpos ypos))))
+          (let [[xpos' ypos'] (if (= :macos os)
+                                [xpos ypos]
+                                [(/ xpos scale-x) (/ ypos scale-y)])]
+          	 (safe-call #'game/on-mouse-move xpos' ypos')))))
 
     (GLFW/glfwSetMouseButtonCallback window
       (reify GLFWMouseButtonCallbackI
@@ -67,7 +80,6 @@
 
     (let [context (DirectContext/makeGL)
           fb-id   (GL11/glGetInteger 0x8CA6)
-          [scale-x scale-y] (display-scale window)
           target  (BackendRenderTarget/makeGL (* scale-x width) (* scale-y height) 0 8 fb-id FramebufferFormat/GR_GL_RGBA8)
           surface (Surface/makeFromBackendRenderTarget context target SurfaceOrigin/BOTTOM_LEFT SurfaceColorFormat/RGBA_8888 (ColorSpace/getSRGB))
           canvas  (.getCanvas surface)]
@@ -87,7 +99,9 @@
       (Callbacks/glfwFreeCallbacks window)
       (GLFW/glfwHideWindow window)
       (GLFW/glfwDestroyWindow window)
-      (GLFW/glfwPollEvents)
+      ; (GLFW/glfwPollEvents)
+
+      (System/exit 0)
 
       (.close surface)
       (.close target)
@@ -95,5 +109,4 @@
 
       (GLFW/glfwTerminate)
       (.free (GLFW/glfwSetErrorCallback nil))
-      (shutdown-agents)
-)))
+      (shutdown-agents))))
